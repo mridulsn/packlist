@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packlist</title>
+<meta name="description" content="Tell it the trip, the days, the weather and who's going. Get a packing checklist with quantities, grouped and ready to tick off.">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<style>
+@font-face {
+  font-family: "Pixelify Sans";
+  src: url("assets/PixelifySans.ttf") format("truetype");
+  font-weight: 400 700;
+  font-display: swap;
+}
+/* Game Boy green */
+:root {
+  --gb0: #0f380f;
+  --gb1: #306230;
+  --gb2: #8bac0f;
+  --gb3: #9bbc0f;
+  --screen: #c4d68a;
+  --shell: #d3d0c6;
+  --shell-dark: #b9b5aa;
+  --pixel: "Pixelify Sans", "Courier New", monospace;
+  --body: Verdana, "Segoe UI", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font: 16px/1.55 var(--body);
+  color: var(--gb0);
+  background: var(--shell);
+  background-image: linear-gradient(var(--shell-dark) 1px, transparent 1px);
+  background-size: 100% 6px;
+  min-height: 100vh;
+}
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--gb1); outline-offset: 2px; }
+
+header { max-width: 760px; margin: 0 auto; padding: 18px 16px 0; display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 22px var(--pixel); letter-spacing: 1px; }
+.brand svg { width: 28px; height: 28px; }
+.brand .led { width: 8px; height: 8px; background: #c0392b; box-shadow: 0 0 0 2px var(--shell-dark); margin-left: 6px; }
+header .spacer { flex: 1; }
+.link { background: none; border: 0; padding: 4px 8px; cursor: pointer; font-size: 15px; text-decoration: underline; text-underline-offset: 3px; }
+
+main { max-width: 760px; margin: 0 auto; padding: 18px 16px 24px; }
+/* A screen: dark bezel, green glass */
+.screen { background: #4a4a4f; padding: 14px; border-radius: 6px 6px 28px 6px; margin-bottom: 26px; box-shadow: inset 0 0 0 2px #3a3a3e; }
+.screen > .glass { background: var(--screen); padding: 24px 26px 26px; border: 3px solid var(--gb0); }
+.screen .label { font: 700 12px var(--pixel); color: #b8b8c0; letter-spacing: 2px; margin: -4px 0 8px 4px; }
+
+h1 { font: 700 32px/1.1 var(--pixel); margin: 0 0 6px; }
+.lede { margin: 0 0 20px; color: var(--gb1); }
+h2 { font: 700 20px var(--pixel); margin: 0 0 10px; }
+
+.field { margin: 0 0 20px; }
+.lab { display: block; font-weight: 700; margin-bottom: 8px; }
+.lab .opt { font-weight: 400; color: var(--gb1); font-size: 14px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 3px solid var(--gb0); background: var(--gb3); padding: 4px 12px; cursor: pointer; font-size: 15px;
+  box-shadow: 3px 3px 0 var(--gb0);
+}
+.chip:hover { background: var(--gb2); }
+.chip[aria-pressed=true] { background: var(--gb0); color: var(--gb3); font-weight: 700; }
+.chip:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--gb0); }
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+.stepper { display: inline-flex; align-items: stretch; border: 3px solid var(--gb0); background: var(--gb3); box-shadow: 3px 3px 0 var(--gb0); }
+.stepper button { width: 38px; border: 0; background: var(--gb2); cursor: pointer; font: 700 20px var(--pixel); }
+.stepper button:hover { background: var(--gb1); color: var(--gb3); }
+.stepper input { width: 56px; border: 0; border-left: 3px solid var(--gb0); border-right: 3px solid var(--gb0); background: var(--gb3); text-align: center; font: 700 20px var(--pixel); padding: 4px 0; -moz-appearance: textfield; }
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.people { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.people .p { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.people .p small { color: var(--gb1); font-size: 12px; margin-top: -6px; }
+.people .stepper { align-self: flex-start; }
+.people .stepper button { width: 30px; }
+.people .stepper input { width: 40px; }
+
+.tick { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; margin: 0 0 10px; }
+.tick input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.tick .box { flex: none; width: 22px; height: 22px; border: 3px solid var(--gb0); background: var(--gb3); margin-top: 1px; position: relative; }
+.tick input:checked + .box::after { content: ""; position: absolute; left: 3px; top: 3px; width: 10px; height: 10px; background: var(--gb0); }
+.tick input:focus-visible + .box { outline: 3px solid var(--gb1); outline-offset: 2px; }
+
+/* The list */
+.listhead { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.title {
+  flex: 1; min-width: 200px; border: 0; border-bottom: 3px dashed var(--gb1); background: transparent;
+  font: 700 24px var(--pixel); padding: 2px 0; color: var(--gb0);
+}
+.title:focus { outline: none; border-bottom-style: solid; }
+.progress { margin: 0 0 18px; }
+.bar { height: 18px; border: 3px solid var(--gb0); background: var(--screen); position: relative; }
+.bar i { position: absolute; left: 0; top: 0; bottom: 0; background: repeating-linear-gradient(90deg, var(--gb0) 0 10px, var(--gb1) 10px 12px); width: 0; transition: width .2s steps(6); }
+.progress p { margin: 6px 0 0; font-size: 14px; }
+.tip { font-size: 14px; border-left: 4px solid var(--gb0); padding-left: 10px; margin: 0 0 16px; }
+.tip:empty { display: none; }
+
+.group { margin: 0 0 20px; }
+.group h3 { font: 700 17px var(--pixel); margin: 0 0 8px; padding: 3px 8px; background: var(--gb0); color: var(--gb3); display: flex; justify-content: space-between; }
+.group h3 span { font-family: var(--body); font-weight: 400; font-size: 13px; }
+.items { list-style: none; margin: 0; padding: 0; }
+.items li { border-bottom: 2px dotted var(--gb1); }
+.items label { display: flex; gap: 10px; align-items: flex-start; padding: 7px 4px; cursor: pointer; }
+.items label:hover { background: rgba(15,56,15,.06); }
+.items input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.items .box { flex: none; width: 22px; height: 22px; border: 3px solid var(--gb0); background: var(--gb3); margin-top: 1px; position: relative; }
+.items input:checked + .box::after { content: ""; position: absolute; left: 3px; top: 3px; width: 10px; height: 10px; background: var(--gb0); }
+.items input:focus-visible + .box { outline: 3px solid var(--gb1); outline-offset: 2px; }
+.items .what { flex: 1; min-width: 0; }
+.items .qty { display: inline-block; min-width: 2.2em; font: 700 16px var(--pixel); margin-right: 6px; }
+.items .note { display: block; font-size: 13px; color: var(--gb1); }
+.items input:checked ~ .what { text-decoration: line-through; color: var(--gb1); }
+.items .rm { flex: none; background: none; border: 0; cursor: pointer; font: 700 16px var(--pixel); color: var(--gb1); padding: 0 6px; }
+.items .rm:hover { color: var(--gb0); }
+.addrow { display: flex; gap: 8px; margin: 6px 0 0; }
+.addrow input { flex: 1; min-width: 0; border: 3px solid var(--gb0); background: var(--gb3); padding: 6px 10px; }
+
+.btns { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+.btn {
+  border: 3px solid var(--gb0); background: var(--gb1); color: var(--gb3); padding: 7px 16px; cursor: pointer;
+  font: 700 16px var(--pixel); letter-spacing: .5px; box-shadow: 3px 3px 0 var(--gb0);
+}
+.btn:hover { background: var(--gb0); }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--gb0); }
+.btn.light { background: var(--gb3); color: var(--gb0); }
+.btn.light:hover { background: var(--gb2); }
+.status { font-size: 14px; min-height: 1.4em; margin: 10px 0 0; }
+
+.saved { list-style: none; margin: 0; padding: 0; }
+.saved li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 2px dotted var(--gb1); flex-wrap: wrap; }
+.saved .nm { flex: 1; min-width: 140px; font-weight: 700; }
+.saved .meta { font-size: 13px; color: var(--gb1); width: 100%; margin-top: -4px; }
+.saved button { font-size: 14px; padding: 3px 10px; }
+.none { color: var(--gb1); font-size: 14px; margin: 0; }
+
+footer { max-width: 760px; margin: 0 auto; padding: 0 16px 44px; font-size: 14px; }
+footer a { color: var(--gb0); }
+
+dialog { padding: 0; border: 3px solid var(--gb0); background: var(--screen); max-width: 460px; width: calc(100% - 32px); box-shadow: 5px 5px 0 var(--gb0); }
+dialog::backdrop { background: rgba(15,56,15,.25); }
+dialog .in { padding: 22px 24px; }
+dialog h2 { margin-bottom: 12px; }
+dialog p { margin: 0 0 12px; font-size: 15px; }
+dialog a { color: var(--gb0); }
+dialog .btnrow { text-align: right; }
+
+@media (max-width: 600px) {
+  .screen { padding: 8px; border-radius: 4px 4px 18px 4px; }
+  .screen > .glass { padding: 18px 14px 20px; }
+  h1 { font-size: 27px; }
+  .row2 { grid-template-columns: 1fr; }
+  .people { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chip { font-size: 14px; padding: 3px 9px; }
+}
+@media print {
+  @page { margin: 14mm; }
+  body { background: #fff; color: #000; font-size: 12pt; }
+  header, footer, #tripScreen, #savedScreen, .btns, .status, .addrow, .rm, .screen .label { display: none !important; }
+  main { padding: 0; max-width: none; }
+  .screen { background: none; padding: 0; box-shadow: none; }
+  .screen > .glass { background: #fff; border: 0; padding: 0; }
+  .group { break-inside: avoid; }
+  .group h3 { background: #fff; color: #000; border-bottom: 2px solid #000; padding: 2px 0; }
+  .items li { border-bottom: 1px solid #ccc; }
+  .items .box { border-color: #000; background: #fff; width: 16px; height: 16px; }
+  .items input:checked + .box::after { background: #000; left: 2px; top: 2px; width: 6px; height: 6px; }
+  .bar { display: none; }
+  .title { border: 0; }
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">
+    <svg viewBox="0 0 10 10" shape-rendering="crispEdges" aria-hidden="true"><path fill="#0f380f" d="M3 0h4v1H3zM3 1h1v1H3zM6 1h1v1H6zM1 2h8v7H1zM0 3h1v5H0zM9 3h1v5H9z"/><path fill="#9bbc0f" d="M2 3h6v5H2z"/><path fill="#0f380f" d="M3 4h4v1H3zM3 6h3v1H3z"/></svg>
+    packlist<span class="led" aria-hidden="true"></span>
+  </span>
+  <span class="spacer"></span>
+  <button type="button" class="link" id="aboutBtn">About</button>
+</header>
+
+<main>
+  <div class="screen" id="tripScreen">
+    <p class="label">TRIP</p>
+    <div class="glass">
+      <h1>Pack it right.</h1>
+      <p class="lede">Tell it about the trip. It makes the packing list, with how many of each, so nothing gets left behind.</p>
+
+      <div class="field">
+        <span class="lab" id="tripLab">What kind of trip?</span>
+        <div class="chips" id="trip" role="group" aria-labelledby="tripLab"></div>
+      </div>
+
+      <div class="row2">
+        <div class="field">
+          <label class="lab" for="days">How many days?</label>
+          <div class="stepper"><button type="button" data-step="days" data-d="-1" aria-label="One day fewer">-</button><input id="days" type="number" min="1" max="60" value="3" inputmode="numeric"><button type="button" data-step="days" data-d="1" aria-label="One day more">+</button></div>
+        </div>
+        <div class="field">
+          <span class="lab" id="travelLab">Getting there</span>
+          <div class="chips" id="travel" role="group" aria-labelledby="travelLab"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="lab" id="weatherLab">Weather <span class="opt">(pick all that apply)</span></span>
+        <div class="chips" id="weather" role="group" aria-labelledby="weatherLab"></div>
+      </div>
+
+      <div class="field">
+        <span class="lab">Who's going?</span>
+        <div class="people">
+          <div class="p"><label for="adults">Adults</label><small>13 to 64</small><div class="stepper"><button type="button" data-step="adults" data-d="-1" aria-label="One adult fewer">-</button><input id="adults" type="number" min="0" max="12" value="1" inputmode="numeric"><button type="button" data-step="adults" data-d="1" aria-label="One adult more">+</button></div></div>
+          <div class="p"><label for="kids">Kids</label><small>3 to 12</small><div class="stepper"><button type="button" data-step="kids" data-d="-1" aria-label="One kid fewer">-</button><input id="kids" type="number" min="0" max="12" value="0" inputmode="numeric"><button type="button" data-step="kids" data-d="1" aria-label="One kid more">+</button></div></div>
+          <div class="p"><label for="babies">Babies</label><small>under 3</small><div class="stepper"><button type="button" data-step="babies" data-d="-1" aria-label="One baby fewer">-</button><input id="babies" type="number" min="0" max="6" value="0" inputmode="numeric"><button type="button" data-step="babies" data-d="1" aria-label="One baby more">+</button></div></div>
+          <div class="p"><label for="elders">Elders</label><small>65 and over</small><div class="stepper"><button type="button" data-step="elders" data-d="-1" aria-label="One elder fewer">-</button><input id="elders" type="number" min="0" max="12" value="0" inputmode="numeric"><button type="button" data-step="elders" data-d="1" aria-label="One elder more">+</button></div></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="lab" id="actLab">Plans <span class="opt">(optional)</span></span>
+        <div class="chips" id="activities" role="group" aria-labelledby="actLab"></div>
+      </div>
+
+      <label class="tick"><input type="checkbox" id="abroad"><span class="box" aria-hidden="true"></span><span>Going abroad</span></label>
+      <label class="tick"><input type="checkbox" id="laundry"><span class="box" aria-hidden="true"></span><span>I can do laundry there</span></label>
+    </div>
+  </div>
+
+  <div class="screen" id="listScreen">
+    <p class="label">LIST</p>
+    <div class="glass">
+      <div class="listhead">
+        <input class="title" id="title" value="My packing list" aria-label="List name" maxlength="40">
+      </div>
+      <div class="progress"><div class="bar" aria-hidden="true"><i id="barFill"></i></div><p id="progressText" aria-live="polite"></p></div>
+      <p class="tip" id="tip"></p>
+      <div id="groups"></div>
+      <div class="group" id="mineGroup">
+        <h3>Things I added <span id="mineCount"></span></h3>
+        <ul class="items" id="mine"></ul>
+        <form class="addrow" id="addForm"><input id="addInput" maxlength="60" placeholder="Add something else, e.g. Kindle" aria-label="Add an item"><button class="btn light" type="submit">Add</button></form>
+      </div>
+      <div class="btns">
+        <button type="button" class="btn" id="saveBtn">Save list</button>
+        <button type="button" class="btn light" id="shareBtn">Copy as text</button>
+        <button type="button" class="btn light" id="printBtn">Print</button>
+        <button type="button" class="btn light" id="untickBtn">Untick all</button>
+      </div>
+      <p class="status" id="status" role="status"></p>
+    </div>
+  </div>
+
+  <div class="screen" id="savedScreen">
+    <p class="label">SAVED</p>
+    <div class="glass">
+      <h2>Saved lists</h2>
+      <ul class="saved" id="saved"></ul>
+      <p class="none" id="noneSaved">Nothing saved yet. Lists are saved on this device.</p>
+    </div>
+  </div>
+</main>
+
+<footer><a href="https://mridulsaravanan.com/#/projects">More projects</a></footer>
+
+<dialog id="about" aria-labelledby="aboutTitle">
+  <div class="in">
+    <h2 id="aboutTitle">About packlist</h2>
+    <p><strong>packlist</strong> turns a few details about your trip into a packing checklist, with quantities worked out from the number of days, the weather and who's coming.</p>
+    <p>Clothes are counted for up to a week. Tick "I can do laundry there" and longer trips are planned around one wash.</p>
+    <p>Tick things off as you pack, add your own, then save the list or copy it as text for WhatsApp. Saved lists stay on this device.</p>
+    <p>It's a starting point, not a rulebook: check visa and airline rules for your own trip.</p>
+    <p>Font: Pixelify Sans (SIL Open Font License). One of the projects at <a href="https://mridulsaravanan.com/#/projects">mridulsaravanan.com</a>.</p>
+    <div class="btnrow"><button type="button" class="btn" id="aboutOk">OK</button></div>
+  </div>
+</dialog>
+
+<script src="engine.js"></script>
+<script>
+(function () {
+  'use strict';
+  var PL = window.PackList;
+  var $ = function (id) { return document.getElementById(id); };
+  var KEY = 'packlist.v1';
+  var state = { opts: { trip: 'city', days: 3, weather: ['mild'], travel: 'train', adults: 1, kids: 0, babies: 0, elders: 0, activities: [], abroad: false, laundry: false },
+    done: {}, mine: [], title: 'My packing list', saved: [] };
+  var result = null;
+
+  function load() {
+    try {
+      var s = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (s && s.current) {
+        state.opts = PL.normalise(s.current.opts);
+        state.done = s.current.done || {};
+        state.mine = Array.isArray(s.current.mine) ? s.current.mine : [];
+        state.title = s.current.title || state.title;
+      }
+      if (s && Array.isArray(s.saved)) state.saved = s.saved;
+    } catch (e) { /* defaults */ }
+  }
+  function persist() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ current: { opts: state.opts, done: state.done, mine: state.mine, title: state.title }, saved: state.saved }));
+    } catch (e) { /* storage blocked: the list still works for this visit */ }
+  }
+
+  function chips(id, map, multi) {
+    var el = $(id);
+    Object.keys(map).forEach(function (k) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.textContent = map[k]; b.setAttribute('data-k', k);
+      el.appendChild(b);
+    });
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('.chip'); if (!b) return;
+      var k = b.getAttribute('data-k');
+      var field = id;
+      if (multi) {
+        var arr = state.opts[field].slice(), i = arr.indexOf(k);
+        if (i >= 0) arr.splice(i, 1); else arr.push(k);
+        state.opts[field] = arr;
+      } else state.opts[field] = k;
+      sync(); render();
+    });
+  }
+
+  function sync() {
+    ['trip', 'travel'].forEach(function (f) {
+      Array.prototype.forEach.call($(f).children, function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-k') === state.opts[f])); });
+    });
+    ['weather', 'activities'].forEach(function (f) {
+      Array.prototype.forEach.call($(f).children, function (b) { b.setAttribute('aria-pressed', String(state.opts[f].indexOf(b.getAttribute('data-k')) >= 0)); });
+    });
+    ['days', 'adults', 'kids', 'babies', 'elders'].forEach(function (f) { if (document.activeElement !== $(f)) $(f).value = state.opts[f]; });
+    $('abroad').checked = state.opts.abroad;
+    $('laundry').checked = state.opts.laundry;
+    $('title').value = state.title;
+  }
+
+  function itemRow(it, mine) {
+    var li = document.createElement('li');
+    var lab = document.createElement('label');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = !!state.done[it.id]; cb.setAttribute('data-id', it.id);
+    var box = document.createElement('span'); box.className = 'box'; box.setAttribute('aria-hidden', 'true');
+    var what = document.createElement('span'); what.className = 'what';
+    if (it.qty) { var q = document.createElement('span'); q.className = 'qty'; q.textContent = it.qty + 'x'; what.appendChild(q); }
+    what.appendChild(document.createTextNode(it.name));
+    if (it.note) { var n = document.createElement('span'); n.className = 'note'; n.textContent = it.note; what.appendChild(n); }
+    lab.appendChild(cb); lab.appendChild(box); lab.appendChild(what);
+    li.appendChild(lab);
+    if (mine) {
+      var rm = document.createElement('button');
+      rm.type = 'button'; rm.className = 'rm'; rm.textContent = 'x'; rm.setAttribute('aria-label', 'Remove ' + it.name); rm.setAttribute('data-rm', it.id);
+      lab.appendChild(rm);
+    }
+    return li;
+  }
+
+  function render() {
+    result = PL.build(state.opts);
+    var wrap = $('groups');
+    wrap.textContent = '';
+    result.groups.forEach(function (g) {
+      var sec = document.createElement('section'); sec.className = 'group';
+      var h = document.createElement('h3'); h.textContent = g.title;
+      var c = document.createElement('span'); c.setAttribute('data-count', g.id); h.appendChild(c);
+      var ul = document.createElement('ul'); ul.className = 'items';
+      g.items.forEach(function (it) { ul.appendChild(itemRow(it)); });
+      sec.appendChild(h); sec.appendChild(ul); wrap.appendChild(sec);
+    });
+    var mine = $('mine'); mine.textContent = '';
+    state.mine.forEach(function (it) { mine.appendChild(itemRow(it, true)); });
+    $('tip').textContent = result.tip;
+    counts();
+    persist();
+  }
+
+  function allItems() {
+    var out = [];
+    result.groups.forEach(function (g) { g.items.forEach(function (it) { out.push(it); }); });
+    return out.concat(state.mine);
+  }
+
+  function counts() {
+    var items = allItems();
+    var packed = items.filter(function (it) { return state.done[it.id]; }).length;
+    $('barFill').style.width = (items.length ? Math.round(100 * packed / items.length) : 0) + '%';
+    $('progressText').textContent = packed === items.length && items.length ? 'All ' + items.length + ' packed. Have a good trip!' : packed + ' of ' + items.length + ' packed';
+    result.groups.forEach(function (g) {
+      var n = g.items.filter(function (it) { return state.done[it.id]; }).length;
+      var el = document.querySelector('[data-count="' + g.id + '"]');
+      if (el) el.textContent = n + '/' + g.items.length;
+    });
+    $('mineCount').textContent = state.mine.length ? state.mine.filter(function (it) { return state.done[it.id]; }).length + '/' + state.mine.length : '';
+  }
+
+  // Ticks
+  document.addEventListener('change', function (e) {
+    var id = e.target.getAttribute && e.target.getAttribute('data-id');
+    if (!id) return;
+    if (e.target.checked) state.done[id] = 1; else delete state.done[id];
+    counts(); persist();
+  });
+  $('mine').addEventListener('click', function (e) {
+    var id = e.target.getAttribute('data-rm'); if (!id) return;
+    e.preventDefault();
+    state.mine = state.mine.filter(function (it) { return it.id !== id; });
+    delete state.done[id];
+    render();
+  });
+  $('addForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('addInput').value.trim(); if (!name) return;
+    state.mine.push({ id: 'mine:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: name, qty: 0, note: '' });
+    $('addInput').value = '';
+    render();
+    $('addInput').focus();
+  });
+
+  // Trip inputs
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-step]'); if (!b) return;
+    var f = b.getAttribute('data-step');
+    state.opts[f] = (parseInt(state.opts[f], 10) || 0) + parseInt(b.getAttribute('data-d'), 10);
+    state.opts = PL.normalise(state.opts);
+    sync(); render();
+  });
+  ['days', 'adults', 'kids', 'babies', 'elders'].forEach(function (f) {
+    $(f).addEventListener('input', function () {
+      if (this.value === '') return;
+      state.opts[f] = this.value; state.opts = PL.normalise(state.opts); render();
+    });
+    $(f).addEventListener('blur', sync);
+  });
+  $('abroad').addEventListener('change', function () { state.opts.abroad = this.checked; render(); });
+  $('laundry').addEventListener('change', function () { state.opts.laundry = this.checked; render(); });
+  $('title').addEventListener('input', function () { state.title = this.value; persist(); });
+
+  // Buttons
+  function say(msg) { $('status').textContent = msg; clearTimeout(say.t); say.t = setTimeout(function () { $('status').textContent = ''; }, 3500); }
+  $('printBtn').addEventListener('click', function () { window.print(); });
+  $('untickBtn').addEventListener('click', function () { state.done = {}; render(); say('Everything unticked.'); });
+  $('shareBtn').addEventListener('click', function () {
+    var text = PL.toText({ groups: result.groups.concat(state.mine.length ? [{ title: 'Things I added', items: state.mine }] : []) }, state.title.trim() || 'Packing list', state.done);
+    var done = function () { say('Copied. Paste it into WhatsApp or your notes.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, function () { fallbackCopy(text); done(); });
+    else { fallbackCopy(text); done(); }
+  });
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+    ta.remove();
+  }
+  $('saveBtn').addEventListener('click', function () {
+    var name = state.title.trim() || 'My packing list';
+    var entry = { name: name, savedAt: new Date().toISOString(), opts: state.opts, done: state.done, mine: state.mine };
+    var i = state.saved.findIndex(function (s) { return s.name === name; });
+    if (i >= 0) state.saved[i] = entry; else state.saved.unshift(entry);
+    persist(); renderSaved();
+    say(i >= 0 ? 'Updated "' + name + '".' : 'Saved "' + name + '".');
+  });
+
+  function renderSaved() {
+    var ul = $('saved'); ul.textContent = '';
+    $('noneSaved').hidden = state.saved.length > 0;
+    state.saved.forEach(function (s, i) {
+      var li = document.createElement('li');
+      var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = s.name;
+      var open = document.createElement('button'); open.type = 'button'; open.className = 'btn light'; open.textContent = 'Open'; open.setAttribute('data-open', i);
+      var del = document.createElement('button'); del.type = 'button'; del.className = 'btn light'; del.textContent = 'Delete'; del.setAttribute('data-del', i);
+      var o = PL.normalise(s.opts);
+      var meta = document.createElement('span'); meta.className = 'meta';
+      meta.textContent = PL.TRIPS[o.trip] + ', ' + o.days + (o.days === 1 ? ' day' : ' days') + ' - saved ' + new Date(s.savedAt).toLocaleDateString();
+      li.appendChild(nm); li.appendChild(open); li.appendChild(del); li.appendChild(meta);
+      ul.appendChild(li);
+    });
+  }
+  $('saved').addEventListener('click', function (e) {
+    var o = e.target.getAttribute('data-open'), d = e.target.getAttribute('data-del');
+    if (o != null) {
+      var s = state.saved[+o];
+      state.opts = PL.normalise(s.opts); state.done = s.done || {}; state.mine = s.mine || []; state.title = s.name;
+      sync(); render(); say('Opened "' + s.name + '".');
+      $('listScreen').scrollIntoView({ behavior: 'smooth' });
+    } else if (d != null) {
+      var name = state.saved[+d].name;
+      state.saved.splice(+d, 1); persist(); renderSaved(); say('Deleted "' + name + '".');
+    }
+  });
+  $('aboutBtn').addEventListener('click', function () { $('about').showModal(); });
+  $('aboutOk').addEventListener('click', function () { $('about').close(); });
+
+  load();
+  chips('trip', PL.TRIPS, false);
+  chips('travel', PL.TRAVEL, false);
+  chips('weather', PL.WEATHER, true);
+  chips('activities', PL.ACTIVITIES, true);
+  sync(); render(); renderSaved();
+})();
+</script>
+</body>
+</html>
